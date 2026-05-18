@@ -1,14 +1,8 @@
 import { defineCommand } from 'citty';
 import consola from 'consola';
-import readline from 'readline';
 import { requiresDb, saveChildId } from '../lib/db.js';
 import { openBrowser } from '../lib/browser.js';
 import { LOGIN_URL, extractChildId } from '../lib/pages.js';
-
-function waitForEnter() {
-  const rl = readline.createInterface({ input: process.stdin });
-  return new Promise(resolve => rl.once('line', () => { rl.close(); resolve(); }));
-}
 
 export default defineCommand({
   meta: { description: 'Open Firefox and log in to eliis.eu' },
@@ -31,5 +25,6 @@ export default defineCommand({
 
     saveChildId(childId);
     consola.success(`Saved child ID: ${childId}. You can now run scrape commands (scrape_entries, scrape_maps)`);
+    process.exit(0)
   },
 });
