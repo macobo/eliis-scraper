@@ -30,7 +30,6 @@ Currently only key is `child_id` and `data` would be json-encoded string.
 
 - id: automatic
 - date: iso8601
-- title: string
 - content: text (raw html)
 - kid_status: 'present' | 'missing'
 - kid_note: text (optional)
@@ -133,14 +132,17 @@ Each date-group row has two direct child divs:
 
 ### Card types
 
-The cards container has two `.card` divs in a fixed order:
+The cards container has one or more `.card` divs:
 
 1. **Attendance card** (first `.card`):
    - `kid_status`: `'present'` if `i.mdi-check` exists, `'missing'` if `i.mdi-close`.
    - `kid_note`: innerHTML of the card (raw HTML, preserve as-is).
-2. **Diary entry card** (second `.card`):
-   - `title`: h6 text content (e.g. `"Päevakirjeldus - Sipsikud R04"`).
-   - `content`: innerHTML of `.e3-summary` (raw HTML, preserve as-is). Some entries have multiple content sections inside `.e3-summary`; grabbing the whole element captures all of them.
+2. **Diary entry cards** (remaining `.card`s, one or more):
+   - Each card contains an `h6` title and a `.e3-summary` content block.
+   - `content`: concatenate all diary cards as raw HTML, each wrapped as:
+     ```html
+     <div><h6>…title…</h6><div class="e3-summary">…</div></div>
+     ```
 
 A date group maps to one `entries` row.
 
