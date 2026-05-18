@@ -3,7 +3,7 @@ import consola from 'consola';
 import { requiresDb } from '../lib/db.js';
 import { openBrowser, isLoadMoreDiv, loadNextDiaryPage, ENTRY_SELECTOR } from '../lib/browser.js';
 import { diaryUrl } from '../lib/pages.js';
-import { waitForEnter } from '../lib/util.js';
+import { waitForEnter, sleep } from '../lib/util.js';
 
 async function parseDiaryEntry(page, index) {
   const entry = page.locator(ENTRY_SELECTOR).nth(index);
@@ -15,6 +15,13 @@ async function parseDiaryEntry(page, index) {
   const date = dateText.trim().split('.').reverse().join('-');
 
   const cards = entry.locator('.card');
+  const cardCount = await cards.count();
+  if (cardCount !== 2) {
+    const html = await entry.innerHTML();
+    consola.error(`Expected 2 cards at ${ENTRY_SELECTOR}[${index}], got ${cardCount}:\n${html}`);
+    await waitForEnter()
+    throw new Error(`Unexpected card count: ${cardCount}`);
+  }
   const attendanceCard = cards.nth(0);
   const diaryCard = cards.nth(1);
 
@@ -34,12 +41,14 @@ async function loop(page, state) {
   console.log(entryResult)
 
   if (entryResult.type === 'load-more') {
-    consola.info('Reached end of loaded entries.');
-    await waitForEnter();
+    consola.info('Reached end of currently loaded entries.');
+    // await waitForEnter();
+    await sleep(500);
     const loaded = await loadNextDiaryPage(page)
     if (!loaded) {
       consola.info('No more entries, stopping.')
       await waitForEnter()
+
       return { stop: true }
     }
     return state
