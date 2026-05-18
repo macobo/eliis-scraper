@@ -17,11 +17,14 @@ Node.js scraper leveraging playwright to scrape the site. Features:
 
 ### Database schema
 
-#### `child`
+#### `config`
 
 Should have single entry.
 
-- child_id: string
+- key: string
+- data: JSON
+
+Currently only key is `child_id` and `data` would be json-encoded string.
 
 #### `entries`
 
@@ -31,6 +34,8 @@ Should have single entry.
 - content: text (raw html)
 - kid_status: 'present' | 'missing'
 - kid_note: text (optional)
+
+Unique key on `date`
 
 ### `media`
 
@@ -66,11 +71,11 @@ Opens a firefox page `https://eliis.eu/`. Tells user to log in and navigate to d
 On enter:
 1. grab the current url.
 2. Check it's in the format `eliis.eu/child/{id}/diary`
-3. Upsert id to `child` table
+3. Upsert to `config` table
 
 ### `eliis.js scrape_entries`
 
-Requires schema/database to be present and `child` table filled, early exit if not.
+Requires schema/database to be present and `child_id` config filled, early exit if not.
 
 Open DIARY_PAGE (https://eliis.eu/child/{child_id}/diary)
 
@@ -85,7 +90,7 @@ TODO: Block media requests to keep the scraping cheap as possible.
 
 ### `eliis.js scrape_media`
 
-Requires schema/database to be present and `child` table filled, early exit if not.
+Requires schema/database to be present and `child_id` config filled, early exit if not.
 
 Logs progress, tracking done/total, updated after each scrape is done.
 
@@ -95,7 +100,7 @@ For each entry in `media` table without local_url, download to `build/media/{iso
 
 ### `eliis.js scrape_maps`
 
-Requires schema/database to be present and `child` table filled, early exit if not.
+Requires schema/database to be present and `child_id` config filled, early exit if not.
 
 Opens MAPS_PAGE. Early exit if login page, instruct to run `eliis.js login`
 

@@ -13,6 +13,14 @@ node eliis.js --help         # List subcommands
 node eliis.js <subcommand>   # Run a subcommand
 ```
 
+## Code Structure
+
+- `eliis.js` — CLI entry point, subcommand registration
+- `commands/` — one file per subcommand; keep thin, delegate to `lib/`
+- `lib/db.js` — SQLite singleton (`db()`), schema management, all query helpers
+- `lib/browser.js` — Playwright browser (`openBrowser(url)`)
+- `lib/pages.js` — URL constants/builders and page-specific extraction logic
+
 ## Tech Stack
 
 - **Node.js** with ES modules or CommonJS
