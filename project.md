@@ -12,9 +12,8 @@ seeing all entries laid out + images.
 Node.js scraper leveraging playwright to scrape the site. Features:
 - Multiple sub-commands to facilitate operation
 - A sqllite database to schedule work.
-- Leverages a persistent firefox profile to avoid logging in each time scraper is started.
-- Uses .env file to track secrets.
-- Has useful logging system built in as well as progress bar to track progress.
+- Leverages a persistent firefox profile to avoid logging in each time scraper is started. Under `./firefox-profile/`
+- Has useful logging system built in as well.
 
 ### Database schema
 
@@ -88,7 +87,7 @@ TODO: Block media requests to keep the scraping cheap as possible.
 
 Requires schema/database to be present and `child` table filled, early exit if not.
 
-Logs progress via progress bar - updated after each scrape is done.
+Logs progress, tracking done/total, updated after each scrape is done.
 
 Run `mkdir -p build/media`.
 
@@ -104,14 +103,14 @@ Opens MAPS_PAGE. Early exit if login page, instruct to run `eliis.js login`
 
 The page should contain a table with a bunch of 'maps'. Scrape each. Save content as raw html.
 
-### `eliis.js build`
+### `eliis.js dist`
 
 Requires:
 - Schema/database to be present
 - >0 entries in entries table
 - >0 entries with local_url in `media` table.
 
-Builds the resulting HTML page. TODO.
+Builds the resulting HTML page in `dist/` folder. TODO.
 
 
 ### Open questions

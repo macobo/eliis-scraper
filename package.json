@@ -1,0 +1,19 @@
+{
+  "name": "eliis-scraper",
+  "version": "0.0.1",
+  "description": "Scrape eliis kindergarden diary and maps for posterity",
+  "type": "module",
+  "main": "eliis.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Karl-Aksel Puulmann",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "citty": "^0.2.2",
+    "consola": "^3.4.2",
+    "dotenv": "^17.4.2",
+    "playwright": "^1.60.0"
+  }
+}
