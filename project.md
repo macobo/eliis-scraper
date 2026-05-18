@@ -118,6 +118,43 @@ Requires:
 Builds the resulting HTML page in `dist/` folder. TODO.
 
 
+## Entry Parsing Strategy
+
+Reference DOM: `lib/dom_snapshot_2.html` (single entry), `lib/dom_snapshot.html` (full page).
+
+### Page structure
+
+Entry rows are selected via `ENTRY_SELECTOR` (`browser.js`): `.e3-main-container > div > .e3-guardian-diary > div > div`. The `.e3-guardian-diary` is wrapped in two extra divs before the individual entry rows appear.
+
+Each date-group row has two direct child divs:
+
+1. **Date div** — contains `.d-inline-flex > div` whose text is `"DD.MM.YYYY"`. Convert to ISO8601: split on `.`, reverse, join with `-`.
+2. **Cards container** — contains two `.card` divs.
+
+### Card types
+
+The cards container has two `.card` divs in a fixed order:
+
+1. **Attendance card** (first `.card`):
+   - `kid_status`: `'present'` if `i.mdi-check` exists, `'missing'` if `i.mdi-close`.
+   - `kid_note`: innerHTML of the card (raw HTML, preserve as-is).
+2. **Diary entry card** (second `.card`):
+   - `title`: h6 text content (e.g. `"Päevakirjeldus - Sipsikud R04"`).
+   - `content`: innerHTML of `.e3-summary` (raw HTML, preserve as-is). Some entries have multiple content sections inside `.e3-summary`; grabbing the whole element captures all of them.
+
+A date group maps to one `entries` row.
+
+### Media (future)
+
+Inside the diary entry card, `#imagesCollapse` holds thumbnail divs. Full media info requires clicking each image — TODO.
+
+### Scraping loop
+
+Iterate over `ENTRY_SELECTOR` by index:
+
+- **Detect type**: if the row contains the `"Vaata vanemaid päevikuid"` button it's the load-more row; otherwise it's a date-group.
+- **Date-group**: parse and insert the entry, log, increment index.
+- **Load-more row**: call `loadNextDiaryPage()`, which clicks the button and waits via `waitForFunction` until `ENTRY_SELECTOR` count increases (3 s timeout). Returns `false` if button absent; exit loop. Do not increment index — the row is replaced by new date-groups.
+
 ### Open questions
 
-- How to organize code into subcommands cleanly?

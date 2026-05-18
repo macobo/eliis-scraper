@@ -3,6 +3,7 @@ import consola from 'consola';
 import { requiresDb, saveChildId } from '../lib/db.js';
 import { openBrowser } from '../lib/browser.js';
 import { LOGIN_URL, extractChildId } from '../lib/pages.js';
+import { waitForEnter } from '../lib/util.js'
 
 export default defineCommand({
   meta: { description: 'Open Firefox and log in to eliis.eu' },
