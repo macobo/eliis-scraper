@@ -11,8 +11,9 @@ This scraper saves everything locally and builds a single static HTML page so sh
 - Downloads all media files locally
 - Builds a self-contained `dist/index.html` — serve it with `python -m http.server` and browse offline
 
-A few things that were fun to build:
+Grab-bag of random features:
 - **GitHub-style activity bar** showing days present vs. absent across the full kindergarten period
+- **Google photos-like navigation sidebar** allowing skipping to a relevant date fast
 - **Persistent Firefox profile** — log in once, run scrapes forever without re-authenticating
 - **Keyboard shortcuts** in the gallery (`r` for random entry, `g` for random photo)
 
