@@ -1,9 +1,46 @@
 import { defineCommand } from 'citty';
 import consola from 'consola';
-import { requiresDb } from '../lib/db.js';
-import { openBrowser, isLoadMoreDiv, loadNextDiaryPage, ENTRY_SELECTOR } from '../lib/browser.js';
+import { requiresDb, upsertEntry, upsertMedia } from '../lib/db.js';
+import { openBrowser, isLoadMoreDiv, loadNextDiaryPage, exposeAllDiaryPictures, ENTRY_SELECTOR } from '../lib/browser.js';
 import { diaryUrl } from '../lib/pages.js';
 import { waitForEnter, sleep } from '../lib/util.js';
+
+async function parseMediaModal(page, date_index, entry_row) {
+  const modal = page.locator('#view-media-file-modal');
+  await modal.waitFor({ state: 'visible' });
+
+  const title = (await modal.locator('.e3-modal-header span').textContent()).trim();
+  const container = modal.locator('.e3-image-view-container');
+  const remote_url = (await container.locator('img').count()) > 0
+    ? await container.locator('img').getAttribute('src')
+    : await container.locator('video').getAttribute('src');
+
+  await modal.locator('.e3-modal-header button').click();
+  await modal.waitFor({ state: 'hidden' });
+
+  return { title, remote_url, date_index, entry_id: entry_row.id };
+}
+
+async function parseMedia(page, row, entryIndex) {
+  await exposeAllDiaryPictures(page)
+  const entry = page.locator(ENTRY_SELECTOR).nth(entryIndex);
+  const thumbnails = entry.locator('#imagesCollapse .e3-image-thumbnail');
+  const count = await thumbnails.count();
+  consola.debug(`Entry ${entryIndex}: found ${count} media items`);
+  const media = [];
+  for (let i = 0; i < count; i++) {
+    const thumbnail_url = await thumbnails.nth(i).evaluate(el => {
+      const match = el.style.backgroundImage.match(/url\("([^"]+)"/);
+      return match ? match[1] : null;
+    });
+    await thumbnails.nth(i).click();
+    const item = await parseMediaModal(page, i, row);
+    media.push({ ...item, thumbnail_url });
+  }
+  console.log(media)
+  await sleep(300);
+  return media;
+}
 
 async function cardContent(card) {
   return await card.evaluate(el => {
@@ -28,8 +65,7 @@ async function parseDiaryEntry(page, index) {
   if (cardCount < 2) {
     const html = await entry.innerHTML();
     consola.error(`Expected at least 2 cards at ${ENTRY_SELECTOR}[${index}], got ${cardCount}:\n${html}`);
-    await waitForEnter();
-    throw new Error(`Unexpected card count: ${cardCount}`);
+    return { type: 'skip' }
   }
   const attendanceCard = cards.nth(0);
 
@@ -43,10 +79,10 @@ async function parseDiaryEntry(page, index) {
   }
   const content = contentParts.join('\n');
 
-  if (contentParts > 1) {
-    consola.warn('More than 2 content parts. Press Enter to continue')
-    await waitForEnter();
-  }
+  // if (contentParts > 1) {
+  //   consola.warn('More than 2 content parts. Press Enter to continue')
+  //   await waitForEnter();
+  // }
 
   return { type: 'entry', date, content, kid_status, kid_note };
 }
@@ -55,7 +91,7 @@ async function loop(page, state) {
   state = state || { index: 0 }
   const entryResult = await parseDiaryEntry(page, state.index);
 
-  consola.info(entryResult)
+  console.log(entryResult)
 
   if (entryResult.type === 'load-more') {
     consola.info('Reached end of currently loaded entries.');
@@ -69,10 +105,23 @@ async function loop(page, state) {
       return { stop: true }
     }
     return state
+  } else if (entryResult.type == 'skip') {
+    consola.info(`$(${state.index}): skipping index`)
+    return { index: state.index + 1 }
+  }
+
+  const row = upsertEntry(entryResult);
+  let mediaStatus = 'did not record media'
+
+  if (!row.updated) {
+    const mediaRows = await parseMedia(page, row, state.index);
+    upsertMedia(mediaRows);
+    mediaStatus = `recorded ${mediaRows.length} media to download`
   }
 
   const { date, kid_status } = entryResult;
-  consola.info(`${date} (${state.index}): kid was ${kid_status}`);
+  consola.info(`${date} (${state.index}): kid was ${kid_status}, ${mediaStatus}`);
+  await sleep(500);
 
   return { index: state.index + 1 }
 }
