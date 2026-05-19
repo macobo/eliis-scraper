@@ -43,7 +43,9 @@ Unique key on `date`
 - date_index: int
 - title: string
 - remote_url: string
+- thumbnail_url: string,
 - local_url: string, default null
+- local_thumbnail_url, string default null
 
 ### `maps`
 
@@ -210,3 +212,11 @@ Should be cleanly designed and easy to read. Use tailwind for CSS.
 ### Technical
 
 Code under ./frontend/. Build step takes that code and generates a single index.html file with everything (except images) inlined.
+
+data.json format:
+{
+  "diary_entries": List<{ date: str, content: str, kid_status: 'present' | 'missing', kid_note: str, media: List<{ title: str, local_url: str, local_thumbnail_url: str }>}>,
+  "maps": List<{ date: str, title: str, content: str }>
+}
+
+Media for each date is ordered by date_index.

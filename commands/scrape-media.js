@@ -8,7 +8,7 @@ import { sleep } from '../lib/util.js';
 const MEDIA_DIR = 'dist/media';
 const THUMB_DIR = 'dist/media/thumbnails';
 
-const SLEEP_BETWEEN_ROWS_MS = 500; // ms
+const SLEEP_BETWEEN_ROWS_MS = 100; // ms
 
 function filePath(date, dateIndex, url) {
   const ext = new URL(url).pathname.split('.').pop();
@@ -31,7 +31,11 @@ async function download(sourceUrl, destination) {
 async function work(row) {
   const local_url = path.join(MEDIA_DIR, filePath(row.date, row.date_index, row.remote_url));
   const local_thumbnail_url = path.join(THUMB_DIR, filePath(row.date, row.date_index, row.thumbnail_url));
-  let write = await download(row.remote_url, local_url) || await download(row.thumbnail_url, local_thumbnail_url);
+  const [mainWrite, thumbWrite] = await Promise.all([
+    download(row.remote_url, local_url),
+    download(row.thumbnail_url, local_thumbnail_url),
+  ]);
+  const write = mainWrite || thumbWrite;
   if (write) {
     await sleep(SLEEP_BETWEEN_ROWS_MS);
   }

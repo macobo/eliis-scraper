@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.map-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.map-content th,
+.map-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.map-content th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
