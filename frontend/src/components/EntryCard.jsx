@@ -76,7 +76,7 @@ export default function EntryCard({ entry, onMediaClick, onFocus }) {
     <article
       id={`entry-${date}`}
       onClick={onFocus}
-      className="mb-10 scroll-mt-[76px] rounded-lg px-3 py-2 -mx-3 data-[focused]:bg-blue-50/30 data-[focused]:[box-shadow:inset_0_0_0_2px_#bfdbfe]"
+      className="mb-7 scroll-mt-[76px] rounded-lg px-3 py-2 -mx-3 data-[focused]:bg-blue-50/30 data-[focused]:[box-shadow:inset_0_0_0_2px_#bfdbfe]"
     >
       <div className="flex items-center gap-3 mb-3">
         <h2 className="text-base font-semibold text-gray-800">
@@ -99,7 +99,7 @@ export default function EntryCard({ entry, onMediaClick, onFocus }) {
 
       {media.length > 0 && <MediaGrid media={media} onMediaClick={onMediaClick} />}
 
-      <div className="mt-8 border-b border-gray-100" />
+      {/* <div className="mt-8 border-b border-gray-100" /> */}
     </article>
   );
 }

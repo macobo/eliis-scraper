@@ -63,7 +63,7 @@ export default function ActivityBar({ entries, onDateClick }) {
   if (monthGroups.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto pb-1">
+    <div className="overflow-x-auto pb-3">
       <div className="flex gap-3 min-w-max">
         {monthGroups.map(({ month, label, weeks }) => (
           <div key={month} className="flex flex-col gap-[3px]">

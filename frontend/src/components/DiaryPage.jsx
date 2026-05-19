@@ -59,7 +59,19 @@ export default function DiaryPage({ entries }) {
     if (entries.length === 0) return;
     applyFocus(0);
 
+    const randomInt = (n) => Math.floor(Math.random() * n);
+
     const onKey = (e) => {
+      if (e.key === 'g') {
+        const withMedia = entries.map((e, i) => ({ e, i })).filter(({ e }) => e.media.length > 0);
+        if (withMedia.length === 0) return;
+        const { e: entry, i: entryIndex } = withMedia[randomInt(withMedia.length)];
+        const mediaIndex = randomInt(entry.media.length);
+        applyFocus(entryIndex);
+        programmaticScrollTo(entryIndex);
+        setModalState({ entryIndex, mediaIndex });
+        return;
+      }
       if (modalStateRef.current) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -74,6 +86,10 @@ export default function DiaryPage({ entries }) {
       } else if (e.key === 'Enter') {
         const entry = entries[focusedIndexRef.current];
         if (entry?.media.length > 0) setModalState({ entryIndex: focusedIndexRef.current, mediaIndex: 0 });
+      } else if (e.key === 'r') {
+        const idx = randomInt(entries.length);
+        applyFocus(idx);
+        programmaticScrollTo(idx);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -94,11 +110,11 @@ export default function DiaryPage({ entries }) {
 
   return (
     <div className="max-w-full px-6 py-6">
-      <div className="mb-6 bg-white border border-gray-200 rounded-xl p-4">
-        <ActivityBar entries={entries} onDateClick={jumpTo} />
-      </div>
       <Sidebar entries={entries} activeDate={activeDate} onJumpTo={jumpTo} />
       <div className="pr-16">
+        <div className="mb-6 bg-white border border-gray-200 rounded-xl px-4 pt-4 pb-2 -mx-3">
+          <ActivityBar entries={entries} onDateClick={jumpTo} />
+        </div>
         {entries.length === 0 ? (
           <p className="text-gray-400 text-sm">Kandeid pole.</p>
         ) : (
