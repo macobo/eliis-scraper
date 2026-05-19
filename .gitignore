@@ -4,6 +4,8 @@ dist/*
 build/
 firefox-profile/
 
+frontend/src/data.json
+
 # SQLite
 *.db
 *.sqlite

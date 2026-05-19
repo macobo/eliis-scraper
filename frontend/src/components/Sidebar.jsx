@@ -30,7 +30,7 @@ export default function Sidebar({ entries, activeDate, onJumpTo }) {
             {/* Invisible wide hit area */}
             <button
               onClick={() => onJumpTo(firstDate)}
-              className="absolute inset-0 -right-4 outline-none"
+              className="absolute inset-0 -right-4 outline-none cursor-pointer"
               aria-label={label}
             />
             {/* Visual bar — grows left on hover/active */}

@@ -55,6 +55,11 @@ function buildFrontend() {
   consola.success('Built dist/index.html');
 }
 
+export function dist(mode) {
+  if (mode === 'json' || mode === 'all') writeJSON();
+  if (mode === 'index.html' || mode === 'all') buildFrontend();
+}
+
 export default defineCommand({
   meta: { description: 'Build the static HTML output in dist/' },
   args: {
@@ -71,8 +76,5 @@ export default defineCommand({
       consola.error(`Invalid mode "${mode}". Must be: json | index.html | all`);
       process.exit(1);
     }
-
-    if (mode === 'json' || mode === 'all') writeJSON();
-    if (mode === 'index.html' || mode === 'all') buildFrontend();
   },
 });

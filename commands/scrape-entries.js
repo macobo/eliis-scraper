@@ -3,7 +3,7 @@ import consola from 'consola';
 import { requiresDb, upsertEntry, upsertMedia } from '../lib/db.js';
 import { openBrowser, isLoadMoreDiv, loadNextDiaryPage, exposeAllDiaryPictures, ENTRY_SELECTOR } from '../lib/browser.js';
 import { diaryUrl } from '../lib/pages.js';
-import { waitForEnter, sleep } from '../lib/util.js';
+import { sleep } from '../lib/util.js';
 
 async function parseMediaModal(page, date_index, entry_row) {
   const modal = page.locator('#view-media-file-modal');
@@ -87,8 +87,14 @@ async function parseDiaryEntry(page, index) {
   return { type: 'entry', date, content, kid_status, kid_note };
 }
 
-async function loop(page, state) {
-  state = state || { index: 0 }
+async function loop(state, options) {
+  if (!state) {
+    const { page } = await openBrowser(diaryUrl());
+    await page.waitForSelector('.e3-guardian-diary');
+    state = { index: 0, page }
+  }
+
+  const page = state.page
   const entryResult = await parseDiaryEntry(page, state.index);
 
   console.log(entryResult)
@@ -100,17 +106,21 @@ async function loop(page, state) {
     const loaded = await loadNextDiaryPage(page)
     if (!loaded) {
       consola.info('No more entries, stopping.')
-      await waitForEnter()
-
       return { stop: true }
     }
     return state
   } else if (entryResult.type == 'skip') {
     consola.info(`$(${state.index}): skipping index`)
-    return { index: state.index + 1 }
+    return { index: state.index + 1, page }
   }
 
   const row = upsertEntry(entryResult);
+
+  // Early exit - not a new entry
+  if (options.onlyNew && row.updated) {
+    return { stop: true }
+  }
+
   let mediaStatus = 'did not record media'
 
   if (!row.updated) {
@@ -123,22 +133,30 @@ async function loop(page, state) {
   consola.info(`${date} (${state.index}): kid was ${kid_status}, ${mediaStatus}`);
   await sleep(500);
 
-  return { index: state.index + 1 }
+  return { index: state.index + 1, page }
+}
+
+export async function scrapeDiary(options) {
+  consola.info('Starting scraping diary.', options)
+
+  let state = null
+  while (!state || !state.stop) {
+    state = await loop(state, options)
+  }
+
+  consola.success('Scraping diary done.');
 }
 
 export default defineCommand({
   meta: { description: 'Scrape diary entries from eliis.eu' },
-  async run() {
+  args: {
+    only: { type: 'positional', description: "'all' or 'new'", default: 'all' },
+  },
+  async run({ args }) {
     requiresDb();
 
-    const { page } = await openBrowser(diaryUrl());
-    await page.waitForSelector('.e3-guardian-diary');
-
-    let state = null
-    while (!state || !state.stop) {
-      state = await loop(page, state)
-    }
-
+    const onlyNew = args.only === 'new';
+    await scrapeDiary({ onlyNew });
     process.exit(0)
   },
 });

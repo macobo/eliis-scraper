@@ -59,6 +59,18 @@ async function worker(blacklist, stats) {
   }
 }
 
+export async function scrapeMedia(parallelism) {
+  await fs.mkdir(THUMB_DIR, { recursive: true });
+
+  const blacklist = [];
+  const stats = { done: 0, total: getPendingMediaCount() };
+  consola.info(`Downloading ${stats.total} media items with parallelism ${parallelism}`);
+
+  await Promise.all(Array.from({ length: parallelism }, () => worker(blacklist, stats)));
+
+  consola.success('Scraping media done.');
+}
+
 export default defineCommand({
   meta: { description: 'Download media files for scraped entries' },
   args: {
@@ -66,16 +78,9 @@ export default defineCommand({
   },
   async run({ args }) {
     requiresDb();
+
     const parallelism = parseInt(args.parallelism, 10);
 
-    await fs.mkdir(THUMB_DIR, { recursive: true });
-
-    const blacklist = [];
-    const stats = { done: 0, total: getPendingMediaCount() };
-    consola.info(`Downloading ${stats.total} media items with parallelism ${parallelism}`);
-
-    await Promise.all(Array.from({ length: parallelism }, () => worker(blacklist, stats)));
-
-    consola.info('Done.');
+    await scrapeMedia(parallelism)
   },
 });

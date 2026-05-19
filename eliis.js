@@ -9,6 +9,7 @@ const main = defineCommand({
     scrape_entries: () => import('./commands/scrape-entries.js').then(r => r.default),
     scrape_media:   () => import('./commands/scrape-media.js').then(r => r.default),
     scrape_maps:    () => import('./commands/scrape-maps.js').then(r => r.default),
+    scrape_updates: () => import('./commands/scrape-updates.js').then(r => r.default),
     dist:           () => import('./commands/dist.js').then(r => r.default),
   },
 });
