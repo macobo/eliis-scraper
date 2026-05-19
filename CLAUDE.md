@@ -26,7 +26,6 @@ node eliis.js <subcommand>   # Run a subcommand
 - **Node.js** with ES modules or CommonJS
 - **Playwright** for browser automation (persistent Firefox profile)
 - **SQLite** (`better-sqlite3`) for local persistence
-- **dotenv** for secrets via `.env`
 
 ## Playwright Notes
 
