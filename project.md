@@ -42,7 +42,6 @@ Unique key on `date`
 - entry_id: fk
 - date_index: int
 - title: string
-- upload_note: text
 - remote_url: string
 - local_url: string, default null
 
@@ -89,13 +88,28 @@ TODO: Block media requests to keep the scraping cheap as possible.
 
 ### `eliis.js scrape_media`
 
-Requires schema/database to be present and `child_id` config filled, early exit if not.
+Requires schema/database to be present, early exit if not.
 
-Logs progress, tracking done/total, updated after each scrape is done.
+`eliis.js scrape_media [parallelism]` — parallelism defaults to 1.
 
-Run `mkdir -p build/media`.
+#### Helpers
 
-For each entry in `media` table without local_url, download to `build/media/{iso8601_date}-{%000d-formatted-date_index}.{ext}` and update the entry.
+- `filePath(date, dateIndex, url)` — derives extension from the URL path (e.g. `.jpg`, `.mp4`) and returns `${date}_${dateIndex.toString().padStart(3, '0')}.${ext}`.
+- `download(sourceUrl, destination)` — checks if `destination` already exists; if not, fetches `sourceUrl` and writes to `destination`.
+- `work(row)` — computes local paths for both files, kicks off both downloads in parallel, returns `{ id: row.id, local_url, local_thumbnail_url }`.
+  - Main file: `dist/media/${filePath(date, dateIndex, remote_url)}`
+  - Thumbnail: `dist/media/thumbnails/${filePath(date, dateIndex, thumbnail_url)}`
+
+#### Main loop
+
+1. `mkdir -p dist/media/thumbnails`.
+2. Initialise an in-memory `blacklist` Set (ids that failed this run).
+3. Query: media rows (joined with entries for `date`) where `local_url IS NULL AND local_thumbnail_url IS NULL` and `id NOT IN blacklist`.
+4. Maintain a pool of `parallelism` concurrent `work()` calls. When a slot frees up, pull one new row from the query and start it.
+   - **On success**: update the row with `local_url` and `local_thumbnail_url`; log progress (`done/total`).
+   - **On failure**: log the error, add `row.id` to blacklist.
+   - Either way: fetch one more row and continue.
+5. Stop when no rows remain and all slots are idle.
 
 ### `eliis.js scrape_maps`
 
@@ -146,9 +160,22 @@ The cards container has one or more `.card` divs:
 
 A date group maps to one `entries` row.
 
-### Media (future)
+### Media parsing
 
-Inside the diary entry card, `#imagesCollapse` holds thumbnail divs. Full media info requires clicking each image — TODO.
+Reference DOM: `lib/dom_snapshot_4.html` (image modal + video modal).
+
+`parseMedia(page, entry, entryIndex)` iterates all `.e3-image-thumbnail` elements inside `#imagesCollapse` within the entry (across all diary cards). For each thumbnail:
+
+1. Click it to open the modal (`#view-media-file-modal`).
+2. Call `parseSingleMedia(page)` to extract fields.
+3. Click the button containing `.mdi-close-circle` to close the modal.
+4. Wait for the modal to disappear before proceeding.
+
+Returns an array of media objects with `date_index` (simple counter starting at 0 across all thumbnails for the entry).
+
+`parseSingleMedia(page)`:
+- `title`: `.e3-modal-header span` textContent (trimmed) — numeric ID string, e.g. `"1778837787279"`.
+- `remote_url`: `src` of `.e3-image-view-container img` for images, or `.e3-image-view-container video` for videos.
 
 ### Scraping loop
 
@@ -158,5 +185,28 @@ Iterate over `ENTRY_SELECTOR` by index:
 - **Date-group**: parse and insert the entry, log, increment index.
 - **Load-more row**: call `loadNextDiaryPage()`, which clicks the button and waits via `waitForFunction` until `ENTRY_SELECTOR` count increases (3 s timeout). Returns `false` if button absent; exit loop. Do not increment index — the row is replaced by new date-groups.
 
-### Open questions
 
+## Resulting web page
+
+### Requirements
+
+Has two tabs: `Päevik` (diary) and `Kaardid`.
+
+Single html page with minimal javascript. Everything (except images) is embedded inline, including scripts into a single index.html file?
+
+Should be cleanly designed and easy to read. Use tailwind for CSS.
+
+#### Päevik
+
+- Github-like 'activity' bar at top showing days kid was present vs missing. Clicking on each data point jumps to that day.
+- Sidebar is google photos like navigation for easy jumping
+- Displays each day one-by-one, showing the inline html for each.
+
+#### Maps
+
+- Table listing all the maps, sorted by `date` ascending. Collapsible rows by default collapsed.
+- Clicking on an entry opens the tab showing the inner content nested underneath
+
+### Technical
+
+Code under ./frontend/. Build step takes that code and generates a single index.html file with everything (except images) inlined.
