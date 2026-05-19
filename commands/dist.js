@@ -76,5 +76,7 @@ export default defineCommand({
       consola.error(`Invalid mode "${mode}". Must be: json | index.html | all`);
       process.exit(1);
     }
+
+    dist(mode)
   },
 });
